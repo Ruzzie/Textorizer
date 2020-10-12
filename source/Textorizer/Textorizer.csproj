@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Title>Textorizer</Title>
+        <Description>Sanitize and 'clean' html for safe consumption in a plain text format.</Description>
+        <PackageTags>Html, Sanitize, Clean, Convert, Plain Text</PackageTags>
+        <Authors>Dorus Verhoeckx, Dave van der Horst</Authors>
+        <Company>D Crafting</Company>
+        <Copyright>Copyright © Dorus Verhoeckx 2020</Copyright>
+        <PackageLicenseExpression>MIT,Unlicense</PackageLicenseExpression>
+        <Version>0.0.1</Version>
+        <PackageProjectUrl>https://github.com/ruzzie/Textorizer</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/ruzzie/Textorizer</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Nullable>enable</Nullable>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>$(AssemblyName).UnitTests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>$(AssemblyName).Benchmarks</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+</Project>
