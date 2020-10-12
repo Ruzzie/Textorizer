@@ -18,13 +18,16 @@
 
     <ItemGroup>
       <None Remove="input_html_01.html" />
-      <Content Include="input_html_01.html">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Textorizer\Textorizer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="testdata\input_html_01.html">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>
