@@ -7,7 +7,7 @@
         <Authors>Dorus Verhoeckx, Dave van der Horst</Authors>
         <Company>D Crafting</Company>
         <Copyright>Copyright © Dorus Verhoeckx 2020</Copyright>
-        <PackageLicenseExpression>MIT,Unlicense</PackageLicenseExpression>
+        <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
         <Version>0.0.1</Version>
         <PackageProjectUrl>https://github.com/ruzzie/Textorizer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ruzzie/Textorizer</RepositoryUrl>
