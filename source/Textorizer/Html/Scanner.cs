@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace Textorizer.Html
-{
+{ //todo: clean-up and refactor code so it is more 'structured', more readable blocks
     internal static class Scanner
     {
         // ReSharper disable InconsistentNaming
@@ -51,8 +51,10 @@ namespace Textorizer.Html
                                 //end of entity
                                 return CreateToken(TokenType.HtmlEntity, HtmlElementType.None, state);
                             }
+
                             current = state.Advance();
                         }
+
                         //end of contiguous chars, but no ';' found
                         //next non-whitespace character should be a ';'
                         // ex: &gt    ;
@@ -63,6 +65,7 @@ namespace Textorizer.Html
                             //end of entity
                             return CreateToken(TokenType.HtmlEntity, HtmlElementType.None, state);
                         }
+
                         // else it is not a valid entity and we can ignore it
                     }
                 }
@@ -251,19 +254,21 @@ namespace Textorizer.Html
                     }
                     else
                     {
-                        if (lookAhead[0] == HTML_TAG_START
-                            && lookAhead[1] == HTML_TAG_SLASH
+                        if (lookAhead[0] == HTML_TAG_START    //       <
+                            && lookAhead[1] == HTML_TAG_SLASH //       /
                             && char.ToUpperInvariant(lookAhead[2]) == 'S'
                             && char.ToUpperInvariant(lookAhead[3]) == 'T'
                             && char.ToUpperInvariant(lookAhead[4]) == 'Y'
                             && char.ToUpperInvariant(lookAhead[5]) == 'L'
                             && char.ToUpperInvariant(lookAhead[6]) == 'E'
-                            && lookAhead[7] == HTML_TAG_END
+                            && lookAhead[7] == HTML_TAG_END //         >
                         )
                         {
                             foundEndTag = true;
                             //The state.Position is now at the start of the closing style tag;
                             //    we could skip it entirely with: // state.Advance("</style>".Length);
+                            //    but we don't, since </style> is a html close tag we position the state
+                            // so the next token is a HtmlCloseTag of type Style
                         }
                         else
                         {
@@ -273,7 +278,6 @@ namespace Textorizer.Html
                     }
                 }
             }
-
 
             RETURN_TOKEN:
             //Determine and adjust the Block level (nesting depth); block level could be used to determine correctness and 'balance' of open / close tags
@@ -304,7 +308,7 @@ namespace Textorizer.Html
 
         private static char AdvanceWhiteSpaces(ref SourceScanState state, char current)
         {
-            while (/*!state.IsAtEnd() && */char.IsWhiteSpace(current))
+            while (char.IsWhiteSpace(current))
             {
                 current = state.Advance();
             }
