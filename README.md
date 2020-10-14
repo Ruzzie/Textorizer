@@ -16,7 +16,7 @@ Keep in mind the following equivalence:
         
     Textorize(input) == Textorize(HtmlEncode(Textorize(input)))
 
-For more examples see the [testsuite](https://github.com/Ruzzie/Textorizer/blob/b9efa0fbff6d213cf56082b9fdd2f168cbfe8fb2/source/Textorizer.UnitTests/HtmlTextorizerTests.cs#L9) 
+For more examples see the [testsuite](https://github.com/Ruzzie/Textorizer/blob/ae0577ed07f930759a1796bb877cd31884fe6709/source/Textorizer.UnitTests/HtmlTextorizerTests.cs#L12) 
 
 ## Install
 
