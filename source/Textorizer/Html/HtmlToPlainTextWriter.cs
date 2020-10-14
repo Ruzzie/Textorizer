@@ -19,15 +19,22 @@ namespace Textorizer.Html
                 case HtmlElementType.Other:
                 case HtmlElementType.Pre:
                     break;
-                case HtmlElementType.P:
-                case HtmlElementType.Ul:
                 case HtmlElementType.Ol:
+                case HtmlElementType.Ul:
+                    if(state.ListDepth <= 1)
+                        state.Out.Append('\n'); //Only write a new line when we are NOT nested in another list
+                    break;
+                case HtmlElementType.P:
+
+
                 case HtmlElementType.Br:
                 case HtmlElementType.Hr:
-                    state.Out.Append("\n");
+                    state.Out.Append('\n');
                     break;
                 case HtmlElementType.Li:
-                    state.Out.Append(new string('\t', Math.Max(state.CurrentBlockDepth - 2, 1)) + "- ");
+                    state.Out.Append('\n');
+                    state.Out.Append('\t', Math.Max(state.ListDepth, 1));
+                    state.Out.Append("- ");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state.CurrentToken.HtmlElementType),
@@ -49,11 +56,17 @@ namespace Textorizer.Html
                 case HtmlElementType.Pre:
                 case HtmlElementType.Br:
                 case HtmlElementType.Hr:
+                    break;
                 case HtmlElementType.Ul:
                 case HtmlElementType.Ol:
+                    if(state.ListDepth <= 1)
+                        state.Out.Append('\n'); //Only write a new line when we are NOT nested in another list
+                    break;
+                case HtmlElementType.Li:
+
                     break;
                 case HtmlElementType.P:
-                case HtmlElementType.Li:
+
                     state.Out.Append("\n");
                     break;
                 default:
@@ -88,7 +101,16 @@ namespace Textorizer.Html
 
             switch (state.InHtmlElement)
             {
-                default:
+                case HtmlElementType.Other:
+                case HtmlElementType.Script:
+                case HtmlElementType.Style:
+                case HtmlElementType.Pre:
+                case HtmlElementType.P:
+                case HtmlElementType.Ul:
+                case HtmlElementType.Ol:
+                case HtmlElementType.Li:
+                case HtmlElementType.Br:
+                case HtmlElementType.Hr:
                     var htmlTrimmedText = ReduceHtmlWhiteSpaces(tokenToWrite.Value.Span);
                     if (EndsOnNewLine(state.Out) || IsFirstTextContentInLi(state, tokenToWrite))
                     {
@@ -97,12 +119,32 @@ namespace Textorizer.Html
 
                     state.Out.Append(htmlTrimmedText);
                     break;
+                default:
+                    if (IsAfterHtmlElement(state))
+                    {
+                        if (EndsOnWhitespace(state.Out))
+                            state.Out.Append(tokenToWrite.Value.Span.TrimStart());
+                        else
+                            state.Out.Append(ReduceHtmlWhiteSpaces(tokenToWrite.Value.Span));
+                    }
+                    else
+                    {
+                        state.Out.Append(tokenToWrite.Value.Span);
+                    }
+
+                    break;
             }
+        }
+
+        private static bool IsAfterHtmlElement(TextorizeState state)
+        {
+            return state.PreviousToken.HtmlElementType != HtmlElementType.None &&
+                   state.PreviousToken.HtmlElementType != HtmlElementType.Invalid;
         }
 
         private static bool IsFirstTextContentInLi(in TextorizeState state, in Token tokenToWrite)
         {
-            //when you are the first piece of text content in a Li, al leading whitespaces should be removed
+            //when you are the first piece of text content in a Li, all leading whitespaces should be removed
             return state.PreviousToken.HtmlElementType == HtmlElementType.Li &&
                    state.PreviousToken.TokenType == TokenType.HtmlOpenTag
                    && tokenToWrite.TokenType == TokenType.Text;
@@ -157,6 +199,11 @@ namespace Textorizer.Html
         private static bool EndsOnNewLine(StringBuilder buffer)
         {
             return buffer.Length > 0 && buffer[^1] == '\n';
+        }
+
+        private static bool EndsOnWhitespace(StringBuilder buffer)
+        {
+            return buffer.Length > 0 && char.IsWhiteSpace(buffer[^1]);
         }
     }
 }

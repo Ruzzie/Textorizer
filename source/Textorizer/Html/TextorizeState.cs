@@ -10,14 +10,15 @@ namespace Textorizer.Html
         public          Token           PreviousToken;
         public          Token           CurrentToken;
         public          int             PreDepth;
+        public          int             ListDepth;
 
         public bool IsInPreformattedText => PreDepth > 0;
 
         public TextorizeState(StringBuilder   @out,
-                             Token           currentToken,
-                             int             currentBlockDepth,
-                             HtmlElementType inHtmlElement,
-                             Token           previousToken)
+                              Token           currentToken,
+                              int             currentBlockDepth,
+                              HtmlElementType inHtmlElement,
+                              Token           previousToken)
         {
             Out               = @out;
             CurrentToken      = currentToken;
@@ -25,6 +26,7 @@ namespace Textorizer.Html
             InHtmlElement     = inHtmlElement;
             PreviousToken     = previousToken;
             PreDepth          = 0;
+            ListDepth         = 0;
         }
     }
 }

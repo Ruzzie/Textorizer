@@ -23,10 +23,10 @@ namespace Textorizer.Html
             var source       = new SourceScanState(htmlInput.AsMemory());
             var htmlTagStack = new Stack<TokenInfo>(32);
             var state = new TextorizeState(new StringBuilder(htmlInput.Length),
-                                          default,
-                                          0,
-                                          HtmlElementType.None,
-                                          default);
+                                           default,
+                                           0,
+                                           HtmlElementType.None,
+                                           default);
 
             while ((state.CurrentToken = Scanner.ScanNextToken(ref source)).TokenType != TokenType.Eof)
             {
@@ -48,6 +48,11 @@ namespace Textorizer.Html
                             {
                                 state.PreDepth++;
                             }
+                            else if (state.CurrentToken.HtmlElementType == HtmlElementType.Ul ||
+                                     state.CurrentToken.HtmlElementType == HtmlElementType.Ol)
+                            {
+                                state.ListDepth++;
+                            }
                         }
 
                         _outputWriter.WriteOpenElement(state, state.CurrentToken);
@@ -57,6 +62,11 @@ namespace Textorizer.Html
                         if (state.CurrentToken.HtmlElementType == HtmlElementType.Pre)
                         {
                             state.PreDepth--;
+                        }
+                        else if (state.CurrentToken.HtmlElementType == HtmlElementType.Ul ||
+                                 state.CurrentToken.HtmlElementType == HtmlElementType.Ol)
+                        {
+                            state.ListDepth--;
                         }
 
                         break;

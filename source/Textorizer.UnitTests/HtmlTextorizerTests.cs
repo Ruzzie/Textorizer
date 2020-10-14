@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -17,7 +18,7 @@ namespace Textorizer.UnitTests
         [TestCase("4. plain text <div><p>Hello Hoi</div> with no html", "4. plain text \nHello Hoi with no html")]
         [TestCase("<p>hoi<p>ook</div></P><p>deef</p>", "\nhoi\nook\n\ndeef\n")]
         [TestCase("<p>hoi<p>ook</p>la</p>", "\nhoi\nook\nla\n")]
-        [TestCase("<p><ul><li>item 1</li><li>item 2</li></ul></p>", "\n\n\t- item 1\n\t- item 2\n\n")]
+        [TestCase("<p><ul><li>item 1</li><li>item 2</li></ul></p>", "\n\n\n\t- item 1\n\t- item 2\n\n")]
         [TestCase("1. aaa<", "1. aaa<")]
         [TestCase("2. aaa<a", "2. aaa<a")]
         [TestCase("3. aaa<a<", "3. aaa<a<")]
@@ -45,9 +46,12 @@ namespace Textorizer.UnitTests
         [TestCase("2. hoi<style>.c{'a:1'};</style><p>a</p>", "2. hoi\na\n")]
         [TestCase("1. X<b>-bld</b>", "1. X-bld")]
         [TestCase("1. <p>Hello</p>    How are you? ", "1. \nHello\nHow are you? ")]
-        [TestCase("li 1. <li>Y   </li>", "li 1. \t- Y \n")]
-        [TestCase("li 2. <li>   X</li>", "li 2. \t- X\n")]
-        [TestCase("li 3. <li>X <b>bld</bld></li>", "li 3. \t- X bld\n")]
+        [TestCase("li 1. <li>Y   </li>", "li 1. \n\t- Y ")]
+        [TestCase("li 2. <li>   X</li>", "li 2. \n\t- X")]
+        [TestCase("li 3. <li>X <b>bld</bld></li>", "li 3. \n\t- X bld")]
+
+        [TestCase("ul 1. <ul><li>lvl 1<ul><li>lvl2</li></ul></li></ul>", "ul 1. \n\n\t- lvl 1\n\t\t- lvl2\n")]
+        
         [TestCase("1. <b>&lt;word&gt;</b>", "1. <word>")]
         [TestCase("2. <b>&ltword&gt</b>", "2. &ltword&gt")]
         [TestCase("1. <p>hi</p>\r\n\r\n\r\n        ok?", "1. \nhi\nok?")]
@@ -67,6 +71,24 @@ namespace Textorizer.UnitTests
             //Assert
             result.Should().Be(expectedOutput);
         }
+
+        [TestCase("\nhello \n")]
+        [TestCase("\nhello  hoi \n")]
+        [TestCase(" \nhello hoi \n ")]
+        [TestCase(" \nhello        hoi \n ")]
+        [TestCase("hello ik ben >  3  & 7 < 3      hoi \n")]
+        [TestCase("hello<p> ik ben >  3  & 7 < 3      hoi \n")]
+        //[TestCase(" \nhello&#160;hoi \n ")]
+        public void TextorizeTwiceOverPlainTextShouldHaveEqualResults(string input)
+        {
+            var first  = Textorize.HtmlToPlainText(input);
+            var second = Textorize.HtmlToPlainText(first);
+
+            first.Should().BeEquivalentTo(second);
+
+            Textorize.HtmlToPlainText(WebUtility.HtmlEncode(second)).Should().BeEquivalentTo(first);
+        }
+
 
         [FsCheck.NUnit.Property]
         public void PropertyTestsShouldNotThrowException(string inputA, string inputB)
@@ -88,6 +110,22 @@ namespace Textorizer.UnitTests
 
             //Assert
             Console.Write(result);
+        }
+
+        [Test]
+        public void HtmlFileTwiceShouldBeEquivalent()
+        {
+            //Arrange
+            var testFilename = Path.Join(TestContext.CurrentContext.TestDirectory, "testdata", "input_html_01.html");
+
+            //Act
+            var first  = Textorize.HtmlToPlainText(File.ReadAllText(testFilename));
+            var second = Textorize.HtmlToPlainText(WebUtility.HtmlEncode(first));
+            File.WriteAllText(Path.Join(TestContext.CurrentContext.TestDirectory, "input_html_01-2-sanitized.txt"),
+                              second);
+
+            //Assert Textorize(input) == Textorize(HtmlEncode(Textorize(input)))
+            first.Should().BeEquivalentTo(second);
         }
     }
 }

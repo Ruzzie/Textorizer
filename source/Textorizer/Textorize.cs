@@ -14,10 +14,11 @@ namespace Textorizer
         /// Converts html input to a safe plain text representation without html.
         /// </summary>
         /// <param name="html">the input string that contains html</param>
-        /// <returns>a text representation of the input</returns>
+        /// <returns>a plain text representation of the input</returns>
         /// <remarks>
         /// Content in Style and Script tags are completely removed, html entity characters are explicitly converted to their unicode characters.
         /// Invalid html is handled best effort for a reasonable equivalent plain text output.
+        /// <code>Textorize(input) == Textorize(HtmlEncode(Textorize(input)))</code>
         /// </remarks>
         public static string HtmlToPlainText(in string html)
         {
