@@ -44,26 +44,35 @@ namespace Textorizer.Html
                         //&[a-z][a-z] &#2 or &#x
                         //        ^     ^      ^
                         current = state.Advance();
-                        while (current != '\0' && char.IsLetterOrDigit(current))
+
+                        while (current != '\0' && char.IsLetterOrDigit(state.PeekNext()))
                         {
+                            current = state.Advance();
+
                             if (current == ';')
                             {
                                 //end of entity
                                 return CreateToken(TokenType.HtmlEntity, HtmlElementType.None, state);
                             }
-
-                            current = state.Advance();
                         }
 
                         //end of contiguous chars, but no ';' found
                         //next non-whitespace character should be a ';'
                         // ex: &gt    ;
-                        //        ^
+                        //            ^
                         current = AdvanceWhiteSpaces(ref state, current);
-                        if (current == ';')
+
+                        if (state.PeekNext() == ';' /*current == ';'*/)
                         {
+                            state.Advance();
                             //end of entity
                             return CreateToken(TokenType.HtmlEntity, HtmlElementType.None, state);
+                        }
+
+                        if (!char.IsLetterOrDigit(current))
+                        {
+                            //Invalid entity, treat as text
+                            return CreateToken(TokenType.Text, HtmlElementType.None, state);
                         }
 
                         // else it is not a valid entity and we can ignore it

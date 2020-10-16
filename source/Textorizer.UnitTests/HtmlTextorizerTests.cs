@@ -51,7 +51,7 @@ namespace Textorizer.UnitTests
         [TestCase("li 3. <li>X <b>bld</bld></li>", "li 3. \n\t- X bld")]
 
         [TestCase("ul 1. <ul><li>lvl 1<ul><li>lvl2</li></ul></li></ul>", "ul 1. \n\n\t- lvl 1\n\t\t- lvl2\n")]
-        
+
         [TestCase("1. <b>&lt;word&gt;</b>", "1. <word>")]
         [TestCase("2. <b>&ltword&gt</b>", "2. &ltword&gt")]
         [TestCase("1. <p>hi</p>\r\n\r\n\r\n        ok?", "1. \nhi\nok?")]
@@ -63,6 +63,10 @@ namespace Textorizer.UnitTests
                   "pre 2.  code \r\n\r\n\r\n        ok?")]
         [TestCase("pre 3. <pre>\n<pre> <span>code \r\n\r\n\r\n</span></pre>        ok?</pre>",
                   "pre 3.  code \r\n\r\n\r\n        ok?")]
+
+        [TestCase("1. invalid entity <b>&hellip<i>word</i></b>", "1. invalid entity &hellipword")]
+        [TestCase("2. invalid entity <b>&hellip    <i>word</i></b>", "2. invalid entity &hellip word")]
+        [TestCase("3. invalid entity <b>&hellip;    <i>&hellipword</i></b>", "3. invalid entity … &hellipword")]
         public void SmokeTests(string htmlInput, string expectedOutput)
         {
             //Act
@@ -71,7 +75,6 @@ namespace Textorizer.UnitTests
             //Assert
             result.Should().Be(expectedOutput);
         }
-
         [TestCase("\nhello \n")]
         [TestCase("\nhello  hoi \n")]
         [TestCase(" \nhello hoi \n ")]
