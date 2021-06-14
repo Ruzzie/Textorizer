@@ -9,7 +9,7 @@ namespace Textorizer.Html
         public int             BlockLevel      { get; }
 
         public readonly ReadOnlyMemory<char> Value;
-
+        
         public string NewValueStr()
         {
             return new string(Value.Span);

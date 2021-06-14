@@ -20,7 +20,7 @@ namespace Textorizer
         /// Invalid html is handled best effort for a reasonable equivalent plain text output.
         /// <code>Textorize(input) == Textorize(HtmlEncode(Textorize(input)))</code>
         /// </remarks>
-        public static string HtmlToPlainText(in string html)
+        public static string HtmlToPlainText(string html)
         {
             return HtmlToPlainTextorizer.Textorize(html);
         }

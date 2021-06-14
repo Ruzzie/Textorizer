@@ -6,7 +6,6 @@ namespace Textorizer
     internal ref struct SourceScanState
     {
         public int  CurrentPos => _currentPos;
-        public bool IsInBlock  => BlockLevel > 0;
         public int  StartIndex;
         public int  BlockLevel;
         public bool IsInTag;

@@ -13,11 +13,11 @@ namespace Textorizer.Html
             _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
         }
 
-        public string Textorize(in string htmlInput)
+        public string Textorize(string htmlInput)
         {
             if (string.IsNullOrWhiteSpace(htmlInput))
             {
-                return string.Empty;
+                return "";
             }
 
             var source       = new SourceScanState(htmlInput.AsMemory());
@@ -145,7 +145,7 @@ namespace Textorizer.Html
                 state.InHtmlElement = HtmlElementType.None;
         }
 
-        private static bool IsOtherHtmlOpenElement(in TokenInfo possibleOpenElement, in Token closeElement)
+        private static bool IsOtherHtmlOpenElement(TokenInfo possibleOpenElement, Token closeElement)
         {
             return possibleOpenElement.Token.TokenType == TokenType.HtmlOpenTag &&
                    possibleOpenElement.Token.HtmlElementType != HtmlElementType.None &&
@@ -153,9 +153,9 @@ namespace Textorizer.Html
                    possibleOpenElement.Token.HtmlElementType != closeElement.HtmlElementType;
         }
 
-        private static bool IsMatchingCloseTagFor(in TokenInfo openTagToken,
-                                                  in Token     currentClosingTagToken,
-                                                  int          currentBlockDepth)
+        private static bool IsMatchingCloseTagFor(TokenInfo openTagToken,
+                                                  Token     currentClosingTagToken,
+                                                  int       currentBlockDepth)
         {
             return openTagToken.Token.HtmlElementType == currentClosingTagToken.HtmlElementType
                    && openTagToken.Token.HtmlElementType != HtmlElementType.None

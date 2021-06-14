@@ -6,7 +6,7 @@ namespace Textorizer.Html
 {
     internal sealed class HtmlToPlainTextWriter : IHtmlToTextWriter
     {
-        public void WriteOpenElement(in TextorizeState state, in Token tokenToWrite)
+        public void WriteOpenElement(in TextorizeState state, Token tokenToWrite)
         {
             switch (state.CurrentToken.HtmlElementType)
             {
@@ -42,7 +42,7 @@ namespace Textorizer.Html
             }
         }
 
-        public void WriteCloseElement(in TextorizeState state, in Token tokenToWrite)
+        public void WriteCloseElement(in TextorizeState state, Token tokenToWrite)
         {
             switch (state.CurrentToken.HtmlElementType)
             {
@@ -75,7 +75,7 @@ namespace Textorizer.Html
             }
         }
 
-        public void WriteText(in TextorizeState state, in Token tokenToWrite)
+        public void WriteText(in TextorizeState state, Token tokenToWrite)
         {
             if (tokenToWrite.TokenType == TokenType.HtmlEntity)
             {
@@ -142,7 +142,7 @@ namespace Textorizer.Html
                    state.PreviousToken.HtmlElementType != HtmlElementType.Invalid;
         }
 
-        private static bool IsFirstTextContentInLi(in TextorizeState state, in Token tokenToWrite)
+        private static bool IsFirstTextContentInLi(in TextorizeState state, Token tokenToWrite)
         {
             //when you are the first piece of text content in a Li, all leading whitespaces should be removed
             return state.PreviousToken.HtmlElementType == HtmlElementType.Li &&

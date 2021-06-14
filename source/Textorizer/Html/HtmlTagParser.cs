@@ -4,7 +4,7 @@ namespace Textorizer.Html
 {
     internal static class HtmlTagParser
     {
-        public static HtmlElementType Parse(in ReadOnlySpan<char> htmlTagStringValue)
+        public static HtmlElementType Parse(ReadOnlySpan<char> htmlTagStringValue)
         {
             if (htmlTagStringValue.IsEmpty)
             {

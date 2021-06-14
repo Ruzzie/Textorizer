@@ -12,6 +12,6 @@
         /// </summary>
         /// <param name="textToSanitize">the input text</param>
         /// <returns>the converted input</returns>
-        string Textorize(in string textToSanitize);
+        string Textorize(string textToSanitize);
     }
 }

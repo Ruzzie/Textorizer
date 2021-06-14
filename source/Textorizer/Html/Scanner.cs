@@ -107,6 +107,7 @@ namespace Textorizer.Html
                 return ScanTag(ref state, current);
             }
 
+            // not in a tag and we found a '<'
             if (current == HTML_TAG_END)
             {
                 if (state.IsInTag)
@@ -221,24 +222,54 @@ namespace Textorizer.Html
                 && htmlElementType == HtmlElementType.Script)
             {
                 //Skip the contents of the <script> tag
-                // move position to next valid '<'
-                var isInSingleQuote = false;
-                var isInDoubleQuote = false;
+                bool foundEndTag     = false;
 
+                // move position to next valid '</script>'
                 while (!state.IsAtEnd()
-                       && ((isInDoubleQuote || isInSingleQuote)
-                           || (state.PeekNext() != HTML_TAG_START))
+                       && foundEndTag == false
+
                 )
                 {
-                    current = state.Advance();
+                    var lookAhead = state.LookAhead("</script>".Length);
+                    if (lookAhead == ReadOnlySpan<char>.Empty)
+                    {
+                        // We are possibly at the end of the input text, so now we exit the loop
 
-                    if (current == '"' && isInSingleQuote == false)
-                    {
-                        isInDoubleQuote = !isInDoubleQuote; //toggle
+                        //Try to advance to the next close tag candidate, any will do,
+                        //  since we now know that there is no valid closing tag
+                        //    <script> var x = "1" </y>EOF
+                        // ------------------------^
+                        while(!state.IsAtEnd() && state.PeekNext() != HTML_TAG_START)
+                        {
+                            state.Advance();
+                        }
+
+                        foundEndTag = true;
                     }
-                    else if (current == '\'' && isInDoubleQuote == false)
+                    else
                     {
-                        isInSingleQuote = !isInSingleQuote; //toggle
+                        if (lookAhead[0] == HTML_TAG_START    //       <
+                            && lookAhead[1] == HTML_TAG_SLASH //       /
+                            && char.ToUpperInvariant(lookAhead[2]) == 'S'
+                            && char.ToUpperInvariant(lookAhead[3]) == 'C'
+                            && char.ToUpperInvariant(lookAhead[4]) == 'R'
+                            && char.ToUpperInvariant(lookAhead[5]) == 'I'
+                            && char.ToUpperInvariant(lookAhead[6]) == 'P'
+                            && char.ToUpperInvariant(lookAhead[7]) == 'T'
+                            && lookAhead[8] == HTML_TAG_END //         >
+                        )
+                        {
+                            foundEndTag = true;
+                            //The state.Position is now at the start of the closing style tag;
+                            //    we could skip it entirely with: // state.Advance("</script>".Length);
+                            //    but we don't, since </script> is a html close tag we position the state
+                            // so the next token is a HtmlCloseTag of type Style
+                        }
+                        else
+                        {
+                            foundEndTag = false;
+                            state.Advance();
+                        }
                     }
                 }
 
@@ -258,7 +289,17 @@ namespace Textorizer.Html
                     var lookAhead = state.LookAhead("</style>".Length);
                     if (lookAhead == ReadOnlySpan<char>.Empty)
                     {
-                        //we are at the end of the input text, so now we exit the loop
+                        // We are possibly at the end of the input text, so now we exit the loop
+
+                        //Try to advance to the next close tag candidate, any will do,
+                        //  since we now know that there is no valid closing tag
+                        //    <style> .c{color:'blue'} </y>EOF
+                        // ----------------------------^
+                        while(!state.IsAtEnd() && state.PeekNext() != HTML_TAG_START)
+                        {
+                            state.Advance();
+                        }
+
                         foundEndTag = true;
                     }
                     else

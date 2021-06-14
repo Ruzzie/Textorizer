@@ -63,13 +63,13 @@ namespace Textorizer.Benchmarks
         }
 
         [Benchmark]
-        public string StripHtmlOptimized()
+        public string Textorize()
         {
             return _optHtmlTextorizer.Textorize(Data);
         }
 
         [Benchmark]
-        public string NewReplace()
+        public string ReduceHtmlWhiteSpaces()
         {
             return HtmlToPlainTextWriter.ReduceHtmlWhiteSpaces(Data);
         }
