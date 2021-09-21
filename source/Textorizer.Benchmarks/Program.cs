@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using Textorizer;
 using Textorizer.Html;
 
 namespace Textorizer.Benchmarks
@@ -21,7 +20,7 @@ namespace Textorizer.Benchmarks
         [ParamsSource(nameof(ValuesForData))]
         public string Data { get; set; }
 
-        private readonly ITextorizer _optHtmlTextorizer = new HtmlTextorizer(new HtmlToPlainTextWriter());
+        private readonly HtmlTextorizer<PlainTextWriter> _optHtmlTextorizer = new HtmlTextorizer<PlainTextWriter>(new PlainTextWriter());
 
         public IEnumerable<string> ValuesForData => new[]
         {
@@ -59,7 +58,7 @@ namespace Textorizer.Benchmarks
         [Benchmark(Baseline = true)]
         public string ClassicReplace()
         {
-            return HtmlToPlainTextWriter.ReplaceHtmlWhiteSpacesClassic(Data);
+            return PlainTextWriter.ReplaceHtmlWhiteSpacesClassic(Data);
         }
 
         [Benchmark]
@@ -71,7 +70,7 @@ namespace Textorizer.Benchmarks
         [Benchmark]
         public string ReduceHtmlWhiteSpaces()
         {
-            return HtmlToPlainTextWriter.ReduceHtmlWhiteSpaces(Data);
+            return PlainTextWriter.ReduceHtmlWhiteSpaces(Data);
         }
     }
 }

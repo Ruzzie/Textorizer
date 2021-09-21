@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Textorizer.Html
 {
-    internal sealed class HtmlTextorizer : ITextorizer
+    internal sealed class HtmlTextorizer<TWriter> : ITextorizer where TWriter:IHtmlToTextWriter
     {
-        private readonly IHtmlToTextWriter _outputWriter;
+        private readonly TWriter _outputWriter;
 
-        public HtmlTextorizer(IHtmlToTextWriter outputWriter)
+        public HtmlTextorizer(TWriter outputWriter)
         {
             _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
         }

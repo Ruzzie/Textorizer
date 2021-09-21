@@ -3,7 +3,7 @@
     /// <summary>
     /// Representation of a Html Element that are relevant for converting html content.
     /// </summary>
-    public enum HtmlElementType
+    public enum HtmlElementType : byte
     {
         /// None
         None,

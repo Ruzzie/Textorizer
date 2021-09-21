@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Textorizer.Html
 {
-    internal sealed class HtmlToPlainTextWriter : IHtmlToTextWriter
+    internal sealed class PlainTextWriter : IHtmlToTextWriter
     {
         public void WriteOpenElement(in TextorizeState state, Token tokenToWrite)
         {

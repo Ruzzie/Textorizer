@@ -43,6 +43,8 @@ namespace Textorizer.UnitTests
         [TestCase("5. hoi<script>var x = \" '<>' \";window.close();<p>a<p/>", "5. hoi\na\n")]
         [TestCase("6. hoi<script>var x = \" '<>' \";if(x < 1) window.close();<p>a<p/>", "6. hoi\na\n")]
         [TestCase("7. hoi<script>var x = \" '<>' \";if(x > 1) window.close();<p>a<p/>", "7. hoi\na\n")]
+        [TestCase("8. hoi<script>var x = '<>';window.close();</    script>", "8. hoi")]
+        [TestCase("9. hoi< script >var x = '<>';window.close();< /    script >", "9. hoi")]
         [TestCase("1. hoi<style>#\\~\\!\\@\\$\\%\\^\\&\\*\\(\\)\\_\\+-\\=\\,\\.\\/\\'\\;\\:\\\"\\?\\>\\<\\[\\]\\\\\\{\\}\\|\\`\\#{</style><p>a</p>",
                   "1. hoi\na\n")]
         [TestCase("2. hoi<style>.c{'a:1'};</style><p>a</p>", "2. hoi\na\n")]

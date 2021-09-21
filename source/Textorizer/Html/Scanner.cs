@@ -162,8 +162,8 @@ namespace Textorizer.Html
             var isInQuote = false;
 
             //Fast forward to the expected '>'
-            // and remember the last char before the '>' so we can check later if it is a self closing tag
-            //  we skip all attributes and ignore '>' that are in quotes (for ex. in an attr. value: class=">1")
+            //  and remember the last char before the '>' so we can check later if it is a self closing tag
+            //  we skip all attributes and ignore '>' that are in quotes: (for ex. in an attr. value: class=">1")
             while (!state.IsAtEnd()
                    && (state.PeekNext() != HTML_TAG_END || isInQuote)
             )
@@ -239,6 +239,9 @@ namespace Textorizer.Html
                         //  since we now know that there is no valid closing tag
                         //    <script> var x = "1" </y>EOF
                         // ------------------------^
+                        // note: this also could be the case for a script closing tag with spaces in the name:
+                        //       </    script>
+
                         while(!state.IsAtEnd() && state.PeekNext() != HTML_TAG_START)
                         {
                             state.Advance();
@@ -330,7 +333,8 @@ namespace Textorizer.Html
             }
 
             RETURN_TOKEN:
-            //Determine and adjust the Block level (nesting depth); block level could be used to determine correctness and 'balance' of open / close tags
+            //Determine and adjust the Block level (nesting depth);
+            //  the block level could be used to determine correctness and 'balance' of open / close tags
             var blockLevelForToken = AdjustBlockLevel(ref state, htmlElementType, currTokenType);
 
             //: so return the token

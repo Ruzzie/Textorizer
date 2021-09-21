@@ -8,7 +8,7 @@ namespace Textorizer
     /// </summary>
     public static class Textorize
     {
-        private static readonly HtmlTextorizer HtmlToPlainTextorizer = new HtmlTextorizer(new HtmlToPlainTextWriter());
+        private static readonly HtmlTextorizer<PlainTextWriter> HtmlToPlainTextorizer = new HtmlTextorizer<PlainTextWriter>(new PlainTextWriter());
 
         /// <summary>
         /// Converts html input to a safe plain text representation without html.

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 using FluentAssertions;
 using NUnit.Framework;
 using Textorizer.Html;
@@ -271,6 +273,19 @@ namespace Textorizer.UnitTests
         public void ParseToElementTypeTests(string input, HtmlElementType expected)
         {
             HtmlTagParser.Parse(input).Should().Be(expected);
+        }
+
+        [TestCase(1024 * 1024)]
+        [TestCase(256 * 1024 - 1 )]
+        public void ParseToElementTypeNoStackOverflowTest(int strSize)
+        {
+            var capacity    = strSize;
+            var largeString = new StringBuilder(capacity);
+            largeString.Append("<t");
+            largeString.AppendJoin("", Enumerable.Repeat("h", capacity - 4));
+            largeString.Append(">");
+
+            HtmlTagParser.Parse(largeString.ToString()).Should().Be(HtmlElementType.Other);
         }
 
         [FsCheck.NUnit.Property]
