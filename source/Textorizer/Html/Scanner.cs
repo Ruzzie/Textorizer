@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace Textorizer.Html
 { //todo: clean-up and refactor code so it is more 'structured', more readable blocks
@@ -157,18 +158,25 @@ namespace Textorizer.Html
             }
 
             //Next is the element name and attrs until either '/' or '>'
+        SCAN_FOR_HTML_TAG_END:
             var lastNonWhitespaceCharacter = '\0';
+            var attrQuoteState             = '\0'; // attribute quotation marks can be: none, " or '
+            var firstAttrQuoteStartPos     = -1;
 
-            var isInQuote = false;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static bool IsInQuote(char quoteState)
+            {
+                return quoteState != '\0';
+            }
 
             //Fast forward to the expected '>'
             //  and remember the last char before the '>' so we can check later if it is a self closing tag
             //  we skip all attributes and ignore '>' that are in quotes: (for ex. in an attr. value: class=">1")
             while (!state.IsAtEnd()
-                   && (state.PeekNext() != HTML_TAG_END || isInQuote)
+                   && (state.PeekNext() != HTML_TAG_END || IsInQuote(attrQuoteState))
             )
             {
-                if (state.PeekNext() == HTML_TAG_START && !isInQuote)
+                if (state.PeekNext() == HTML_TAG_START && !IsInQuote(attrQuoteState))
                 {
                     //We found a '<' after '<x '
                     // for ex: <1<br>
@@ -183,9 +191,19 @@ namespace Textorizer.Html
                 if (!char.IsWhiteSpace(current))
                 {
                     lastNonWhitespaceCharacter = current;
-                    if (current == '"')
+
+                    if (IsInQuote(current) && current == attrQuoteState) // when we are in a " or ' quote and we found the matching closing quote
                     {
-                        isInQuote = !isInQuote; //toggle
+                        attrQuoteState = '\0'; // toggle
+                    }
+                    else if (current == '"' || current == '\'')
+                    {
+                        if(!IsInQuote(attrQuoteState)) // when not in quote, toggle
+                        {
+                            attrQuoteState = current;
+                            if(firstAttrQuoteStartPos == -1) //only the first encountered quote
+                                firstAttrQuoteStartPos = state.CurrentPos;
+                        }
                     }
                 }
             }
@@ -201,6 +219,21 @@ namespace Textorizer.Html
 
             if (state.IsAtEnd())
             {
+                // we are at EOF and still in a quote of a HTML tag
+                //  this means the quoting was unbalanced
+                //  ex.: <p attr="val>>.... </p>
+                //        -------^
+                //        no matching closing quote found (the valid equivalent would be): <p attr="val>">.... </p>
+                if (IsInQuote(attrQuoteState) && firstAttrQuoteStartPos != -1)
+                {
+                    //Backtrack to the last start index of the quote
+                    //and skip the quote in an attempt to re-balance
+                    if (state.BackTrack(firstAttrQuoteStartPos) != '\0')
+                    {
+                        goto SCAN_FOR_HTML_TAG_END;
+                    }
+                }
+
                 //We expect the '>' as the next char but we are at the end
                 // so for example "<a"
                 //                  ^
@@ -222,7 +255,7 @@ namespace Textorizer.Html
                 && htmlElementType == HtmlElementType.Script)
             {
                 //Skip the contents of the <script> tag
-                bool foundEndTag     = false;
+                bool foundEndTag = false;
 
                 // move position to next valid '</script>'
                 while (!state.IsAtEnd()
@@ -230,10 +263,14 @@ namespace Textorizer.Html
 
                 )
                 {
-                    var lookAhead = state.LookAhead("</script>".Length);
+                    const int          SCRIPT_CLOSE_TAG_LENGTH = 9; //"</script>".Length;
+                    ReadOnlySpan<char> lookAhead               = state.LookAhead(SCRIPT_CLOSE_TAG_LENGTH);
+
                     if (lookAhead == ReadOnlySpan<char>.Empty)
                     {
-                        // We are possibly at the end of the input text, so now we exit the loop
+                        // We are possibly at the end of the input text,
+                        //   we could not look ahead far enough
+                        //    so now we try to exit the loop
 
                         //Try to advance to the next close tag candidate, any will do,
                         //  since we now know that there is no valid closing tag
@@ -289,8 +326,9 @@ namespace Textorizer.Html
 
                 while (!state.IsAtEnd() && foundEndTag == false)
                 {
-                    var lookAhead = state.LookAhead("</style>".Length);
-                    if (lookAhead == ReadOnlySpan<char>.Empty)
+                    const int          STYLE_CLOSE_TAG_LENGTH = 8; //"</style>".Length;
+                    ReadOnlySpan<char> lookAhead              = state.LookAhead(STYLE_CLOSE_TAG_LENGTH);
+                    if (lookAhead == ReadOnlySpan<char>.Empty) // could not lookahead that far
                     {
                         // We are possibly at the end of the input text, so now we exit the loop
 
@@ -332,7 +370,7 @@ namespace Textorizer.Html
                 }
             }
 
-            RETURN_TOKEN:
+        RETURN_TOKEN:
             //Determine and adjust the Block level (nesting depth);
             //  the block level could be used to determine correctness and 'balance' of open / close tags
             var blockLevelForToken = AdjustBlockLevel(ref state, htmlElementType, currTokenType);

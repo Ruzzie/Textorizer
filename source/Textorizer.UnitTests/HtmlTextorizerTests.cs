@@ -83,6 +83,24 @@ namespace Textorizer.UnitTests
             //Assert
             result.Should().Be(expectedOutput);
         }
+
+        [TestCase("<p id=\"one>\">double quote skip \"id\"</p>", "\ndouble quote skip \"id\"\n")]
+        [TestCase("<p id='one'>single quote skip \"id\"</p>", "\nsingle quote skip \"id\"\n")]
+        [TestCase("1. <p id='one>'>single quote skip \"id\"</p>", "1. \nsingle quote skip \"id\"\n")]
+        [TestCase("2. <p id='one>\">'>single quote skip \"id\"</p>", "2. \nsingle quote skip \"id\"\n")]
+        [TestCase("3. <p id=\"one>'>\">double quote skip \"id\"</p>", "3. \ndouble quote skip \"id\"\n")]
+        [TestCase("4. <p id=\"one'>unbalanced quote skip \"id\"</p>", "4. \nunbalanced quote skip \"id\"\n")]
+        [TestCase("5. <p id=\"one'>unbalanced quote skip</p>", "5. \nunbalanced quote skip\n")]
+        [TestCase("6. <p id=\"one>unclosed quote skip</p>", "6. \nunclosed quote skip\n")]
+        public void SkipAttributesTests(string htmlInput, string expectedOutput)
+        {
+            //Act
+            string result = Textorize.HtmlToPlainText(htmlInput);
+
+            //Assert
+            result.Should().Be(expectedOutput);
+        }
+
         [TestCase("\nhello \n")]
         [TestCase("\nhello  hoi \n")]
         [TestCase(" \nhello hoi \n ")]

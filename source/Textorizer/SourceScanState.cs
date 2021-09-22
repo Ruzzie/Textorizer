@@ -44,6 +44,20 @@ namespace Textorizer
             return '\0'; //NULL CHAR
         }
 
+        public char BackTrack(int toPosition)
+        {
+            if (toPosition > _currentPos)
+                return '\0';
+            if (toPosition < StartIndex)
+                return '\0';
+            if(toPosition >= _sourceDataLength) // at end
+                return '\0';
+
+            _currentPos = toPosition;
+
+            return SourceDataSpan[toPosition];
+        }
+
         public void Advance(int count)
         {
             if (!IsAtEnd())

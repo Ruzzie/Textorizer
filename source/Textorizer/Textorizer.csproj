@@ -15,6 +15,7 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

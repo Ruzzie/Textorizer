@@ -83,6 +83,8 @@ namespace Textorizer.UnitTests
         [TestCase("<ul class=\"pretty\" data-attrs=\"100\">")]
         [TestCase("<ul\n class=\"pretty\" \n data-attrs=\"100\"\n>")]
         [TestCase("<img src=\"http://test\">")]
+        [TestCase("<p id='one'>")]
+        [TestCase("<input disabled>")]
         public void ReturnsHtmlOpenTagTokenForHtmlOpenTagInText(string input)
         {
             //Arrange
@@ -127,6 +129,7 @@ namespace Textorizer.UnitTests
         [TestCase("<ul/>")]
         [TestCase("<ul class=\"pretty\" data-attrs=\"100\"/>")]
         [TestCase("<ul\n class=\"pretty\" \n data-attrs=\"100\"\n/>")]
+        [TestCase("<input disabled async/>")]
         public void ReturnsHtmlSelfClosingTagTokenForHtmlOpenTagInText(string input)
         {
             //Arrange
