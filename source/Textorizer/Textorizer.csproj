@@ -12,10 +12,10 @@
         <PackageProjectUrl>https://github.com/ruzzie/Textorizer</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ruzzie/Textorizer</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>enable</Nullable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <LangVersion>default</LangVersion>
+        <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>

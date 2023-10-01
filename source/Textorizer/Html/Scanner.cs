@@ -398,6 +398,7 @@ namespace Textorizer.Html
                 };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static char AdvanceWhiteSpaces(ref SourceScanState state, char current)
         {
             while (char.IsWhiteSpace(current))
