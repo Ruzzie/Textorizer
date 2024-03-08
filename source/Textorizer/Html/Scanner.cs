@@ -258,10 +258,7 @@ namespace Textorizer.Html
                 bool foundEndTag = false;
 
                 // move position to next valid '</script>'
-                while (!state.IsAtEnd()
-                       && foundEndTag == false
-
-                )
+                while (!state.IsAtEnd() && foundEndTag == false)
                 {
                     const int          SCRIPT_CLOSE_TAG_LENGTH = 9; //"</script>".Length;
                     ReadOnlySpan<char> lookAhead               = state.LookAhead(SCRIPT_CLOSE_TAG_LENGTH);

@@ -20,9 +20,9 @@ namespace Textorizer.Html
                 return "";
             }
 
-            var source       = new SourceScanState(htmlInput.AsMemory());
-            var htmlTagStack = new Stack<TokenInfo>(32);
-            var state = new TextorizeState(new StringBuilder(htmlInput.Length),
+            var source       = new SourceScanState(htmlInput.AsMemory()); // also create an overload with ReadOnlySpan and ReadOnlyMemory etc...
+            var htmlTagStack = new Stack<TokenInfo>(32); // can we also get this from a pool and or limit the allocation (ref struct variant)
+            var state = new TextorizeState(new StringBuilder(htmlInput.Length), // get from optional pool?
                                            default,
                                            0,
                                            HtmlElementType.None,
