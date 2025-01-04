@@ -2,166 +2,167 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Textorizer.Html
-{
-    internal sealed class HtmlTextorizer<TWriter> : ITextorizer where TWriter:IHtmlToTextWriter
-    {
-        private readonly TWriter _outputWriter;
+namespace Textorizer.Html;
 
-        public HtmlTextorizer(TWriter outputWriter)
+internal sealed class HtmlTextorizer<TWriter> : ITextorizer where TWriter : IHtmlToTextWriter
+{
+    private readonly TWriter _outputWriter;
+
+    public HtmlTextorizer(TWriter outputWriter)
+    {
+        _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
+    }
+
+    public string Textorize(string htmlInput)
+    {
+        if (string.IsNullOrWhiteSpace(htmlInput))
         {
-            _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
+            return "";
         }
 
-        public string Textorize(string htmlInput)
+        var source = new SourceScanState(htmlInput.AsMemory());
+        var htmlTagStack = new Stack<TokenInfo>(32); // can we also get this from a pool and or limit the allocation (ref struct variant)
+        var state = new TextorizeState(new StringBuilder(htmlInput.Length)
+                                     , // get from optional pool?
+                                       default
+                                     , 0
+                                     , HtmlElementType.None
+                                     , default
+                                     , source.SourceDataSpan);
+
+        while ((state.CurrentToken = Scanner.ScanNextToken(ref source)).TokenType != TokenType.Eof)
         {
-            if (string.IsNullOrWhiteSpace(htmlInput))
+            switch (state.CurrentToken.TokenType)
             {
-                return "";
-            }
+                case TokenType.HtmlEntity:
+                case TokenType.Text:
+                    _outputWriter.WriteText(state, state.CurrentToken);
+                    break;
+                case TokenType.HtmlOpenTag:
 
-            var source       = new SourceScanState(htmlInput.AsMemory()); // also create an overload with ReadOnlySpan and ReadOnlyMemory etc...
-            var htmlTagStack = new Stack<TokenInfo>(32); // can we also get this from a pool and or limit the allocation (ref struct variant)
-            var state = new TextorizeState(new StringBuilder(htmlInput.Length), // get from optional pool?
-                                           default,
-                                           0,
-                                           HtmlElementType.None,
-                                           default);
+                    if (state.CurrentToken.HtmlElementType != HtmlElementType.Invalid)
+                    {
+                        state.CurrentBlockDepth++;
+                        state.InHtmlElement = state.CurrentToken.HtmlElementType;
+                        htmlTagStack.Push(new TokenInfo(state.CurrentBlockDepth, state.CurrentToken));
 
-            while ((state.CurrentToken = Scanner.ScanNextToken(ref source)).TokenType != TokenType.Eof)
-            {
-                switch (state.CurrentToken.TokenType)
-                {
-                    case TokenType.HtmlEntity:
-                    case TokenType.Text:
-                        _outputWriter.WriteText(state, state.CurrentToken);
-                        break;
-                    case TokenType.HtmlOpenTag:
-
-                        if (state.CurrentToken.HtmlElementType != HtmlElementType.Invalid)
-                        {
-                            state.CurrentBlockDepth++;
-                            state.InHtmlElement = state.CurrentToken.HtmlElementType;
-                            htmlTagStack.Push(new TokenInfo(state.CurrentBlockDepth, state.CurrentToken));
-
-                            if (state.CurrentToken.HtmlElementType == HtmlElementType.Pre)
-                            {
-                                state.PreDepth++;
-                            }
-                            else if (state.CurrentToken.HtmlElementType == HtmlElementType.Ul ||
-                                     state.CurrentToken.HtmlElementType == HtmlElementType.Ol)
-                            {
-                                state.ListDepth++;
-                            }
-                        }
-
-                        _outputWriter.WriteOpenElement(state, state.CurrentToken);
-                        break;
-                    case TokenType.HtmlCloseTag:
-                        HandleCloseTag(htmlTagStack, ref state);
                         if (state.CurrentToken.HtmlElementType == HtmlElementType.Pre)
                         {
-                            state.PreDepth--;
+                            state.PreDepth++;
                         }
                         else if (state.CurrentToken.HtmlElementType == HtmlElementType.Ul ||
                                  state.CurrentToken.HtmlElementType == HtmlElementType.Ol)
                         {
-                            state.ListDepth--;
+                            state.ListDepth++;
                         }
+                    }
 
-                        break;
-                    case TokenType.HtmlSelfClosingTag:
-                        _outputWriter.WriteOpenElement(state, state.CurrentToken);
-                        break;
-                    case TokenType.Eof:
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                    _outputWriter.WriteOpenElement(state, state.CurrentToken);
+                    break;
+                case TokenType.HtmlCloseTag:
+                    HandleCloseTag(htmlTagStack, ref state);
+                    if (state.CurrentToken.HtmlElementType == HtmlElementType.Pre)
+                    {
+                        state.PreDepth--;
+                    }
+                    else if (state.CurrentToken.HtmlElementType == HtmlElementType.Ul ||
+                             state.CurrentToken.HtmlElementType == HtmlElementType.Ol)
+                    {
+                        state.ListDepth--;
+                    }
 
-                state.PreviousToken = state.CurrentToken;
+                    break;
+                case TokenType.HtmlSelfClosingTag:
+                    _outputWriter.WriteOpenElement(state, state.CurrentToken);
+                    break;
+                case TokenType.Eof:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
-            return state.Out.ToString();
+            state.PreviousToken = state.CurrentToken;
         }
 
-        private void HandleCloseTag(Stack<TokenInfo> htmlTagStack, ref TextorizeState state)
+        return state.Out.ToString();
+    }
+
+    private void HandleCloseTag(Stack<TokenInfo> htmlTagStack, ref TextorizeState state)
+    {
+        do
         {
-            do
+            if (htmlTagStack.TryPeek(out var topOfStackTokenInfo))
             {
-                if (htmlTagStack.TryPeek(out var topOfStackTokenInfo))
+                if (IsMatchingCloseTagFor(topOfStackTokenInfo, state.CurrentToken, state.CurrentBlockDepth))
                 {
-                    if (IsMatchingCloseTagFor(topOfStackTokenInfo, state.CurrentToken, state.CurrentBlockDepth))
+                    //We have a match
+                    //we can pop and discard the open tag op top of the stack
+                    htmlTagStack.Pop();
+                    _outputWriter.WriteCloseElement(state, state.CurrentToken);
+                    state.CurrentBlockDepth--;
+
+                    //if there is a parent, set the InHtmlElementState to the parent's element type
+                    SetInHtmlElementToParentOrNone(htmlTagStack, ref state);
+                    break;
+                }
+
+                if (IsOtherHtmlOpenElement(topOfStackTokenInfo, state.CurrentToken))
+                {
+                    //I'm a closing tag, but on top of the stack is a DIFFERENT opening tag (invalid html)
+                    // <p> </div> </p>
+                    //     -^^^^
+                    //On top of the stack is an Open tag
+                    // We are a Close tag
+                    // We do not match
+                    if (topOfStackTokenInfo.ElementDepth == state.CurrentBlockDepth) // Same Depth
                     {
-                        //We have a match
-                        //we can pop and discard the open tag op top of the stack
-                        htmlTagStack.Pop();
-                        _outputWriter.WriteCloseElement(state, state.CurrentToken);
+                        //<p><p></div></a></p>
+                        //       ^^^^   ^
+                        var orphanedOpenTag = htmlTagStack.Pop();
+                        _outputWriter.WriteCloseElement(state, orphanedOpenTag.Token);
                         state.CurrentBlockDepth--;
 
                         //if there is a parent, set the InHtmlElementState to the parent's element type
                         SetInHtmlElementToParentOrNone(htmlTagStack, ref state);
+
+                        _outputWriter.WriteCloseElement(state, state.CurrentToken);
                         break;
                     }
-
-                    if (IsOtherHtmlOpenElement(topOfStackTokenInfo, state.CurrentToken))
-                    {
-                        //I'm a closing tag, but on top of the stack is a DIFFERENT opening tag (invalid html)
-                        // <p> </div> </p>
-                        //     -^^^^
-                        //On top of the stack is an Open tag
-                        // We are a Close tag
-                        // We do not match
-                        if (topOfStackTokenInfo.ElementDepth == state.CurrentBlockDepth) // Same Depth
-                        {
-                            //<p><p></div></a></p>
-                            //       ^^^^   ^
-                            var orphanedOpenTag = htmlTagStack.Pop();
-                            _outputWriter.WriteCloseElement(state, orphanedOpenTag.Token);
-                            state.CurrentBlockDepth--;
-
-                            //if there is a parent, set the InHtmlElementState to the parent's element type
-                            SetInHtmlElementToParentOrNone(htmlTagStack, ref state);
-
-                            _outputWriter.WriteCloseElement(state, state.CurrentToken);
-                            break;
-                        }
-                    }
                 }
-                else
-                {
-                    //Orphaned close element
-                    //Nothing on the stack
-                    _outputWriter.WriteCloseElement(state, state.CurrentToken);
-                }
-            } while (htmlTagStack.Count > 0);
-        }
-
-        private static void SetInHtmlElementToParentOrNone(Stack<TokenInfo> htmlTagStack, ref TextorizeState state)
-        {
-            if (htmlTagStack.TryPeek(out var parent))
-                state.InHtmlElement = parent.Token.HtmlElementType;
+            }
             else
-                state.InHtmlElement = HtmlElementType.None;
-        }
+            {
+                //Orphaned close element
+                //Nothing on the stack
+                _outputWriter.WriteCloseElement(state, state.CurrentToken);
+            }
+        } while (htmlTagStack.Count > 0);
+    }
 
-        private static bool IsOtherHtmlOpenElement(TokenInfo possibleOpenElement, Token closeElement)
-        {
-            return possibleOpenElement.Token.TokenType == TokenType.HtmlOpenTag &&
-                   possibleOpenElement.Token.HtmlElementType != HtmlElementType.None &&
-                   possibleOpenElement.Token.HtmlElementType != HtmlElementType.Invalid &&
-                   possibleOpenElement.Token.HtmlElementType != closeElement.HtmlElementType;
-        }
+    private static void SetInHtmlElementToParentOrNone(Stack<TokenInfo> htmlTagStack, ref TextorizeState state)
+    {
+        if (htmlTagStack.TryPeek(out var parent))
+            state.InHtmlElement = parent.Token.HtmlElementType;
+        else
+            state.InHtmlElement = HtmlElementType.None;
+    }
 
-        private static bool IsMatchingCloseTagFor(TokenInfo openTagToken,
-                                                  Token     currentClosingTagToken,
-                                                  int       currentBlockDepth)
-        {
-            return openTagToken.Token.HtmlElementType == currentClosingTagToken.HtmlElementType
-                   && openTagToken.Token.HtmlElementType != HtmlElementType.None
-                   && openTagToken.Token.HtmlElementType != HtmlElementType.Invalid
-                   && openTagToken.Token.TokenType == TokenType.HtmlOpenTag
-                   && currentBlockDepth == openTagToken.ElementDepth;
-        }
+    private static bool IsOtherHtmlOpenElement(TokenInfo possibleOpenElement, Token closeElement)
+    {
+        return possibleOpenElement.Token.TokenType       == TokenType.HtmlOpenTag   &&
+               possibleOpenElement.Token.HtmlElementType != HtmlElementType.None    &&
+               possibleOpenElement.Token.HtmlElementType != HtmlElementType.Invalid &&
+               possibleOpenElement.Token.HtmlElementType != closeElement.HtmlElementType;
+    }
+
+    private static bool IsMatchingCloseTagFor(TokenInfo openTagToken
+                                            , Token     currentClosingTagToken
+                                            , int       currentBlockDepth)
+    {
+        return openTagToken.Token.HtmlElementType    == currentClosingTagToken.HtmlElementType
+               && openTagToken.Token.HtmlElementType != HtmlElementType.None
+               && openTagToken.Token.HtmlElementType != HtmlElementType.Invalid
+               && openTagToken.Token.TokenType       == TokenType.HtmlOpenTag
+               && currentBlockDepth                  == openTagToken.ElementDepth;
     }
 }
