@@ -10,7 +10,7 @@ internal ref struct SourceScanState
     public int  BlockLevel;
     public bool IsInTag;
 
-    public readonly ReadOnlyMemory<char> SourceData;
+
     public readonly ReadOnlySpan<char>   SourceDataSpan;
 
     private readonly int _sourceDataLength;
@@ -20,8 +20,7 @@ internal ref struct SourceScanState
     {
         _currentPos       = 0;
         _sourceDataLength = input.Length;
-        SourceData        = input;
-        SourceDataSpan    = SourceData.Span;
+        SourceDataSpan    = input.Span;
         BlockLevel        = 0;
         StartIndex        = 0;
         IsInTag           = false;
@@ -37,8 +36,7 @@ internal ref struct SourceScanState
     {
         if (!IsAtEnd())
         {
-            _currentPos++;
-            return SourceDataSpan[_currentPos - 1];
+            return SourceDataSpan[_currentPos++];
         }
 
         return '\0'; //NULL CHAR

@@ -245,7 +245,7 @@ internal static class Scanner
                               );
         }
 
-        state.Advance(); //== '>'; we could double check this...
+        state.Advance(); //== '>'; we could double-check this...
 
         //We have reached the close '>' of the tag
         var textValueRangeForTokenInSource = state.StartIndex .. state.CurrentPos;
@@ -301,8 +301,8 @@ internal static class Scanner
                         foundEndTag = true;
                         //The state.Position is now at the start of the closing script tag;
                         //    we could skip it entirely with: // state.Advance("</script>".Length);
-                        //    but we don't, since </script> is a html close tag we position the state
-                        // so the next token is a HtmlCloseTag of type script
+                        //    but we don't, since </script> is an HTML close tag we position the state
+                        // so the next token is a HtmlCloseTag of TypeScript
                     }
                     else
                     {
@@ -357,7 +357,7 @@ internal static class Scanner
                         foundEndTag = true;
                         //The state.Position is now at the start of the closing style tag;
                         //    we could skip it entirely with: // state.Advance("</style>".Length);
-                        //    but we don't, since </style> is a html close tag we position the state
+                        //    but we don't, since </style> is an HTML close tag we position the state
                         // so the next token is a HtmlCloseTag of type Style
                     }
                     else

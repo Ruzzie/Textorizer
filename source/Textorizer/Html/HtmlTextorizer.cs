@@ -13,6 +13,7 @@ internal sealed class HtmlTextorizer<TWriter> : ITextorizer where TWriter : IHtm
         _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
     }
 
+    /// <inheritdoc />
     public string Textorize(string htmlInput)
     {
         if (string.IsNullOrWhiteSpace(htmlInput))

@@ -25,8 +25,6 @@ internal sealed class PlainTextWriter : IHtmlToTextWriter
                     state.Out.Append('\n'); //Only write a new line when we are NOT nested in another list
                 break;
             case HtmlElementType.P:
-
-
             case HtmlElementType.Br:
             case HtmlElementType.Hr:
                 state.Out.Append('\n');
